@@ -86,9 +86,17 @@ class TodoApp(tk.Tk):
         # the row checkbuttons must be kept alive here or they get collected.
         self._row_vars: dict[int, tk.BooleanVar] = {}
 
-        self.title("To-Do List")
-        self.minsize(420, 380)
-        self.geometry("480x520")
+        self.title("My To-Do List")
+        self.minsize(500, 600)
+        self.geometry("600x700")
+
+        self.bg_color = "#FFF5F7"
+        self.card_color = "#FFFFFF"
+        self.text_color = "#4A3038"
+        self.muted_color = "#9A7A83"
+        self.accent_color = "#D96C8A"
+
+        self.configure(background=self.bg_color)
 
         base = tkfont.nametofont("TkDefaultFont").copy()
         base.configure(size=11)
@@ -98,19 +106,242 @@ class TodoApp(tk.Tk):
         self.font_muted = base.copy()
         self.font_muted.configure(size=9)
 
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(2, weight=1)
+        self.columnconfigure(0, weight=0)
+        self.columnconfigure(1, weight=1)
+        self.rowconfigure(0, weight=1)
 
-        self._build_header()
-        self._build_toolbar()
-        self._build_list()
-        self._build_status()
+        self._build_sidebar()
+        self._build_main_area()
 
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self.refresh()
         self.after_idle(self.entry.focus_set)
 
     # ------------------------------------------------------------------ layout
+    
+    # sidebar
+    def _build_sidebar(self) -> None:
+        sidebar = tk.Frame(
+            self,
+            bg=self.card_color,
+            width=200
+        )
+        sidebar.grid(row=0, column=0, sticky="ns")
+        sidebar.grid_propagate(False)
+
+        menu_button = tk.Button(
+            sidebar,
+            text="☰",
+            font=("Arial", 16),
+            bg=self.card_color,
+            fg=self.text_color,
+            relief="flat",
+            borderwidth=0
+        )
+        menu_button.pack(
+            anchor="w",
+            padx=20,
+            pady=(20, 25)
+        )
+
+        all_lists = tk.Label(
+            sidebar,
+            text="⌂  All lists",
+            font=("Arial", 12, "bold"),
+            bg=self.card_color,
+            fg=self.text_color,
+            anchor="w"
+        )
+        all_lists.pack(
+            fill="x",
+            padx=20,
+            pady=(0, 20)
+        )
+
+        categories = [
+            "Default",
+            "Personal",
+            "Shopping",
+            "Wishlist",
+            "Work",
+            "Finished"
+        ]
+
+        for category in categories:
+            item = tk.Label(
+                sidebar,
+                text=f"   {category}",
+                font=("Arial", 11),
+                bg=self.card_color,
+                fg=self.text_color,
+                anchor="w"
+            )
+            item.pack(
+                fill="x",
+                padx=20,
+                pady=7
+            )
+
+        spacer = tk.Frame(
+            sidebar,
+            bg=self.card_color
+        )
+        spacer.pack(fill="both", expand=True)
+
+        settings = tk.Label(
+            sidebar,
+            text="⚙  Settings",
+            font=("Arial", 11),
+            bg=self.card_color,
+            fg=self.text_color,
+            anchor="w"
+        )
+        settings.pack(
+            fill="x",
+            padx=20,
+            pady=20
+        )
+
+    # main area
+    def _build_main_area(self) -> None:
+        main = tk.Frame(
+            self,
+            bg=self.bg_color
+        )
+        main.grid(
+            row=0,
+            column=1,
+            sticky="nsew",
+            padx=25,
+            pady=20
+        )
+
+        main.columnconfigure(0, weight=1)
+        main.rowconfigure(3, weight=1)
+        main.rowconfigure(4, weight=0)
+
+        # -----------------------------
+        # Title
+        # -----------------------------
+        title = tk.Label(
+            main,
+            text="TASKS",
+            font=("Arial", 20, "bold"),
+            bg=self.bg_color,
+            fg=self.text_color,
+            anchor="w"
+        )
+        title.grid(
+            row=0,
+            column=0,
+            sticky="w"
+        )
+
+        # -----------------------------
+        # Subtitle
+        # -----------------------------
+        subtitle = tk.Label(
+            main,
+            text="All lists",
+            font=("Arial", 11),
+            bg=self.bg_color,
+            fg=self.muted_color,
+            anchor="w"
+        )
+        subtitle.grid(
+            row=1,
+            column=0,
+            sticky="w",
+            pady=(5, 15)
+        )
+
+        # -----------------------------
+        # Add task area
+        # -----------------------------
+        input_frame = tk.Frame(
+            main,
+            bg=self.card_color,
+            height=55
+        )
+        input_frame.grid(
+            row=2,
+            column=0,
+            sticky="ew",
+            pady=(0, 15)
+        )
+        input_frame.grid_propagate(False)
+
+        input_frame.columnconfigure(0, weight=1)
+        input_frame.columnconfigure(1, weight=0)
+
+        # Task input
+        self.entry = tk.Entry(
+            input_frame,
+            font=("Arial", 11),
+            bg=self.card_color,
+            fg=self.text_color,
+            relief="flat",
+            borderwidth=0
+        )
+        self.entry.grid(
+            row=0,
+            column=0,
+            sticky="ew",
+            padx=(15, 5),
+            pady=10
+        )
+
+        self.entry.bind("<Return>", self._on_add)
+
+        # Add task button
+        add_task_button = tk.Button(
+            input_frame,
+            text="ADD TASK",
+            font=("Arial", 10, "bold"),
+            bg=self.accent_color,
+            fg="white",
+            relief="flat",
+            borderwidth=0,
+            padx=15,
+            pady=8,
+            command=self._on_add
+        )
+        add_task_button.grid(
+            row=0,
+            column=1,
+            padx=(5, 10),
+            pady=8
+        )
+
+        # -----------------------------
+        # Task list
+        # -----------------------------
+        self._build_list_in_main(main)
+
+        # -----------------------------
+        # Status
+        # -----------------------------
+        self.status = tk.Label(
+            main,
+            font=("Arial", 9),
+            bg=self.bg_color,
+            fg=self.muted_color,
+            anchor="w"
+        )
+        self.status.grid(
+            row=4,
+            column=0,
+            sticky="ew",
+            pady=(10, 0)
+        )
+
+    def _build_list_in_main(self, main) -> None:
+        self.list_view = ScrollableList(main)
+        self.list_view.grid(
+            row=3,
+            column=0,
+            sticky="nsew"
+        )
 
     def _build_header(self) -> None:
         header = ttk.Frame(self, padding=(12, 12, 12, 6))
@@ -142,10 +373,14 @@ class TodoApp(tk.Tk):
         )
         self.clear_button.grid(row=0, column=len(FILTERS), sticky="e")
 
-    def _build_list(self) -> None:
-        self.list_view = ScrollableList(self)
-        self.list_view.grid(row=2, column=0, sticky="nsew", padx=12)
-
+    def _build_list_in_main(self, main) -> None:
+        self.list_view = ScrollableList(main)
+        self.list_view.grid(
+            row=3,
+            column=0,
+            sticky="nsew"
+    )
+    
     def _build_status(self) -> None:
         self.status = ttk.Label(self, font=self.font_muted, anchor="w", padding=(12, 6))
         self.status.grid(row=3, column=0, sticky="ew")
@@ -172,7 +407,6 @@ class TodoApp(tk.Tk):
         done, total = self.store.counts()
         shown = f"  ·  showing {len(tasks)}" if self.filter_mode.get() != "all" else ""
         self.status.configure(text=f"{done} of {total} done{shown}  ·  saved to {self.store.path}")
-        self.clear_button.state(["!disabled"] if done else ["disabled"])
 
     def _add_row(self, task: Task) -> None:
         row = ttk.Frame(self.list_view.body, padding=(6, 4))
