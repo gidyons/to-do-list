@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#D96C8A">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="menu-btn" id="menuBtn" aria-label="Menu">&#9776;</button>
+            <h2 class="app-title">&#8962; All lists</h2>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <div class="sidebar-footer">
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                <span class="theme-icon">&#9790;</span>
+                <span>Dark mode</span>
+            </button>
+            <div class="settings-link">&#9881; Settings</div>
+        </div>
+    </aside>
+
+    <main class="main-area">
+        <header class="main-header">
+            <h1>TASKS</h1>
+            <p class="subtitle" id="subtitle">All lists</p>
+        </header>
+
+        <section class="input-section">
+            <div class="input-card">
+                <input type="text" id="taskInput" placeholder="Add a new task..." autocomplete="off">
+                <div class="input-actions">
+                    <label class="ocr-btn" title="Add task from image">
+                        <input type="file" id="ocrInput" accept="image/*" hidden>
+                        &#128247;
+                    </label>
+                    <button class="add-btn" id="addBtn">ADD TASK</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="filters-bar">
+            <div class="filter-group">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="active">Active</button>
+                <button class="filter-btn" data-filter="completed">Completed</button>
+            </div>
+            <button class="clear-btn" id="clearCompleted">Clear completed</button>
+        </section>
+
+        <section class="task-list" id="taskList"></section>
+
+        <footer class="status-bar" id="statusBar">0 of 0 done</footer>
+    </main>
+
+    <div class="modal-overlay" id="editModal" hidden>
+        <div class="modal-card">
+            <h3>Edit task</h3>
+            <input type="text" id="editInput" placeholder="Task text">
+            <div class="modal-label">
+                <label for="editLabel">Label</label>
+                <select id="editLabel"></select>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-cancel" id="editCancel">Cancel</button>
+                <button class="modal-save" id="editSave">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toasts"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
