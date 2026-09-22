@@ -45,7 +45,7 @@ brew install tesseract
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/to-do-list.git
+git clone https://github.com/gidyons/to-do-list.git
 cd to-do-list
 
 # Install Python dependencies
