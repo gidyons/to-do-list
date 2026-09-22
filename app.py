@@ -11,8 +11,10 @@ OCR image-to-text conversion is handled via Tesseract.
 from __future__ import annotations
 
 import base64
+import io
 import json
 import os
+import re
 import time
 from pathlib import Path
 
@@ -26,6 +28,8 @@ app = Flask(__name__)
 store = TodoStore()
 
 LABELS = ["Default", "Personal", "Shopping", "Wishlist", "Work", "Events", "Tasks", "Meetings"]
+
+VALID_LABELS = set(LABELS)
 
 
 # ---------------------------------------------------------------------------
@@ -49,8 +53,6 @@ def get_tasks():
     return jsonify([t.to_dict() for t in tasks])
 
 
-VALID_LABELS = set(LABELS)
-
 @app.route("/api/tasks", methods=["POST"])
 def create_task():
     data = request.get_json(force=True)
@@ -61,8 +63,22 @@ def create_task():
     if label not in VALID_LABELS:
         label = "Default"
     reminder = data.get("reminder")
-    task = store.add(text, label=label, reminder=reminder)
+    duration = data.get("duration_minutes")
+    task = store.add(text, label=label, reminder=reminder, duration_minutes=duration)
     return jsonify(task.to_dict()), 201
+
+
+@app.route("/api/tasks/batch", methods=["POST"])
+def create_tasks_batch():
+    data = request.get_json(force=True)
+    texts = data.get("texts", [])
+    label = data.get("label", "Default")
+    if label not in VALID_LABELS:
+        label = "Default"
+    if not texts:
+        return jsonify({"error": "No task texts provided"}), 400
+    tasks = store.add_many(texts, label=label)
+    return jsonify([t.to_dict() for t in tasks]), 201
 
 
 @app.route("/api/tasks/<int:task_id>", methods=["GET"])
@@ -92,6 +108,8 @@ def update_task(task_id: int):
             store.update_label(task_id, "Default")
     if "reminder" in data:
         store.update_reminder(task_id, data["reminder"])
+    if "duration_minutes" in data:
+        store.update_duration(task_id, data["duration_minutes"])
     return jsonify(store.get(task_id).to_dict())
 
 
@@ -134,9 +152,10 @@ def ocr_extract():
         img_bytes = base64.b64decode(image_b64)
         if len(img_bytes) > 2 * 1024 * 1024:
             return jsonify({"error": "Image too large (max 2MB)"}), 400
-        img = Image.open(__import__("io").BytesIO(img_bytes))
+        img = Image.open(io.BytesIO(img_bytes))
         text = pytesseract.image_to_string(img).strip()
-        return jsonify({"text": text})
+        lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+        return jsonify({"text": text, "lines": lines})
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
 

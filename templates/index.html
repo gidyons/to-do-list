@@ -1,77 +1,235 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="light" data-palette="blush">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>To-Do List</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>To-Do</title>
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#D96C8A">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="/static/img/icon-192.png">
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <button class="menu-btn" id="menuBtn" aria-label="Menu">&#9776;</button>
-            <h2 class="app-title">&#8962; All lists</h2>
-        </div>
-        <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-footer">
-            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-                <span class="theme-icon">&#9790;</span>
-                <span>Dark mode</span>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         LANDING PAGE
+         ═══════════════════════════════════════════════════════════ -->
+    <section class="landing" id="landing">
+        <div class="landing-content">
+            <div class="landing-icon">
+                <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="8" y="8" width="64" height="64" rx="16" fill="var(--accent)" opacity="0.12"/>
+                    <rect x="16" y="16" width="48" height="48" rx="12" fill="var(--accent)" opacity="0.2"/>
+                    <path d="M30 42L36 48L50 34" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h1 class="landing-title">To-Do</h1>
+            <p class="landing-sub">Organize your life, one task at a time.</p>
+            <button class="landing-btn" id="landingEnter">
+                Get Started
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
-            <div class="settings-link">&#9881; Settings</div>
         </div>
-    </aside>
+        <div class="landing-dots">
+            <span></span><span></span><span></span>
+        </div>
+    </section>
 
-    <main class="main-area">
-        <header class="main-header">
-            <h1>TASKS</h1>
-            <p class="subtitle" id="subtitle">All lists</p>
-        </header>
+    <!-- ═══════════════════════════════════════════════════════════
+         APP
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="app-shell" id="appShell" hidden>
 
-        <section class="input-section">
-            <div class="input-card">
-                <input type="text" id="taskInput" placeholder="Add a new task..." autocomplete="off">
-                <div class="input-actions">
-                    <label class="ocr-btn" title="Add task from image">
-                        <input type="file" id="ocrInput" accept="image/*" hidden>
-                        &#128247;
-                    </label>
-                    <button class="add-btn" id="addBtn">ADD TASK</button>
+        <!-- Sidebar Overlay (mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="menu-btn" id="menuBtn" aria-label="Close menu">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+                <h2 class="app-logo">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+                    <span>To-Do</span>
+                </h2>
+            </div>
+
+            <nav class="sidebar-nav" id="sidebarNav"></nav>
+
+            <div class="sidebar-section">
+                <h3 class="sidebar-section-title">Settings</h3>
+
+                <div class="setting-row">
+                    <span class="setting-label">Theme</span>
+                    <select class="theme-select" id="themeSelect">
+                        <option value="blush">Blush</option>
+                        <option value="ocean">Ocean</option>
+                        <option value="forest">Forest</option>
+                        <option value="sunset">Sunset</option>
+                        <option value="lavender">Lavender</option>
+                        <option value="midnight">Midnight</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <span class="setting-label">Mode</span>
+                    <button class="mode-toggle" id="modeToggle" aria-label="Toggle dark mode">
+                        <svg class="mode-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                        <svg class="mode-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    </button>
                 </div>
             </div>
-        </section>
+        </aside>
 
-        <section class="filters-bar">
-            <div class="filter-group">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="active">Active</button>
-                <button class="filter-btn" data-filter="completed">Completed</button>
+        <!-- Main Content -->
+        <main class="main-area">
+            <!-- Mobile Header -->
+            <header class="mobile-header" id="mobileHeader">
+                <button class="hamburger" id="hamburger" aria-label="Open menu">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                </button>
+                <span class="mobile-title">To-Do</span>
+            </header>
+
+            <header class="main-header">
+                <div class="header-top">
+                    <h1 class="page-title">
+                        <span class="title-accent">My</span> Tasks
+                    </h1>
+                    <span class="task-count-badge" id="taskCountBadge">0</span>
+                </div>
+                <p class="subtitle" id="subtitle">All tasks</p>
+            </header>
+
+            <!-- Input Section -->
+            <section class="input-section">
+                <div class="input-card">
+                    <input type="text" id="taskInput" placeholder="What needs to be done?" autocomplete="off">
+                    <div class="input-meta">
+                        <select class="input-label-select" id="inputLabelSelect">
+                            <option value="Default">Default</option>
+                            <option value="Personal">Personal</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Wishlist">Wishlist</option>
+                            <option value="Work">Work</option>
+                            <option value="Events">Events</option>
+                            <option value="Tasks">Tasks</option>
+                            <option value="Meetings">Meetings</option>
+                        </select>
+                        <button class="duration-btn" id="durationBtn" title="Set expected duration">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                            <span id="durationLabel">Duration</span>
+                        </button>
+                    </div>
+                    <div class="input-actions">
+                        <label class="ocr-btn" title="Scan tasks from image">
+                            <input type="file" id="ocrInput" accept="image/*" hidden>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        </label>
+                        <button class="add-btn" id="addBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Filters -->
+            <section class="filters-bar">
+                <div class="filter-group">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="active">Active</button>
+                    <button class="filter-btn" data-filter="completed">Done</button>
+                </div>
+                <button class="clear-btn" id="clearCompleted">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    Clear done
+                </button>
+            </section>
+
+            <!-- Task List -->
+            <section class="task-list" id="taskList"></section>
+
+            <!-- Status Bar -->
+            <footer class="status-bar" id="statusBar">
+                <span class="status-text">0 of 0 done</span>
+            </footer>
+        </main>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         DURATION MODAL
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="durationModal" hidden>
+        <div class="modal-card modal-sm">
+            <h3>Expected Duration</h3>
+            <div class="duration-presets">
+                <button class="dur-preset" data-min="5">5m</button>
+                <button class="dur-preset" data-min="15">15m</button>
+                <button class="dur-preset" data-min="30">30m</button>
+                <button class="dur-preset" data-min="60">1h</button>
+                <button class="dur-preset" data-min="120">2h</button>
             </div>
-            <button class="clear-btn" id="clearCompleted">Clear completed</button>
-        </section>
-
-        <section class="task-list" id="taskList"></section>
-
-        <footer class="status-bar" id="statusBar">0 of 0 done</footer>
-    </main>
-
-    <div class="modal-overlay" id="editModal" hidden>
-        <div class="modal-card">
-            <h3>Edit task</h3>
-            <input type="text" id="editInput" placeholder="Task text">
-            <div class="modal-label">
-                <label for="editLabel">Label</label>
-                <select id="editLabel"></select>
+            <div class="duration-custom">
+                <input type="number" id="durationInput" min="1" max="1440" placeholder="Minutes" class="modal-input">
             </div>
             <div class="modal-actions">
-                <button class="modal-cancel" id="editCancel">Cancel</button>
-                <button class="modal-save" id="editSave">Save</button>
+                <button class="modal-btn cancel" id="durationCancel">Cancel</button>
+                <button class="modal-btn save" id="durationSave">Set</button>
             </div>
         </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════════
+         EDIT MODAL
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="editModal" hidden>
+        <div class="modal-card">
+            <h3>Edit Task</h3>
+            <input type="text" id="editInput" placeholder="Task text" class="modal-input">
+            <div class="modal-field">
+                <label for="editLabel">Label</label>
+                <select id="editLabel" class="modal-input"></select>
+            </div>
+            <div class="modal-field">
+                <label for="editDuration">Duration (minutes)</label>
+                <input type="number" id="editDuration" min="1" max="1440" placeholder="Optional" class="modal-input">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="editCancel">Cancel</button>
+                <button class="modal-btn save" id="editSave">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         OCR MODAL — multi-task review
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="ocrModal" hidden>
+        <div class="modal-card modal-wide">
+            <h3>Tasks from Image</h3>
+            <p class="ocr-hint">Select the lines you want to add as tasks.</p>
+            <div class="ocr-task-list" id="ocrTaskList"></div>
+            <div class="modal-field">
+                <label for="ocrLabel">Label for all</label>
+                <select id="ocrLabel" class="modal-input">
+                    <option value="Default">Default</option>
+                    <option value="Personal">Personal</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Work">Work</option>
+                    <option value="Tasks">Tasks</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="ocrCancel">Cancel</button>
+                <button class="modal-btn save" id="ocrAddSelected">Add Selected</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
     <div class="toast-container" id="toasts"></div>
 
     <script src="/static/js/app.js"></script>

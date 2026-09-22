@@ -7,7 +7,6 @@ import os
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Literal
 
 FILTERS = ("all", "active", "completed")
 
@@ -21,6 +20,8 @@ class Task:
     done: bool = False
     label: str = "Default"
     created_at: float = field(default_factory=time.time)
+    completed_at: float | None = None
+    duration_minutes: float | None = None
     reminder: float | None = None
 
     def to_dict(self) -> dict:
@@ -39,8 +40,6 @@ class TodoStore:
         self._tasks: list[Task] = []
         self._next_id: int = 1
         self.load()
-
-    # -- persistence -----------------------------------------------------------
 
     def load(self) -> None:
         if self.path.exists():
@@ -65,14 +64,38 @@ class TodoStore:
                 ensure_ascii=False,
             )
 
-    # -- CRUD ------------------------------------------------------------------
-
-    def add(self, text: str, label: str = "Default", reminder: float | None = None) -> Task:
-        task = Task(id=self._next_id, text=text.strip(), label=label, reminder=reminder)
+    def add(
+        self,
+        text: str,
+        label: str = "Default",
+        reminder: float | None = None,
+        duration_minutes: float | None = None,
+    ) -> Task:
+        task = Task(
+            id=self._next_id,
+            text=text.strip(),
+            label=label,
+            reminder=reminder,
+            duration_minutes=duration_minutes,
+        )
         self._next_id += 1
         self._tasks.append(task)
         self.save()
         return task
+
+    def add_many(self, texts: list[str], label: str = "Default") -> list[Task]:
+        tasks = []
+        for text in texts:
+            t = text.strip()
+            if not t:
+                continue
+            task = Task(id=self._next_id, text=t, label=label)
+            self._next_id += 1
+            self._tasks.append(task)
+            tasks.append(task)
+        if tasks:
+            self.save()
+        return tasks
 
     def get(self, task_id: int) -> Task | None:
         for t in self._tasks:
@@ -91,6 +114,7 @@ class TodoStore:
         task = self.get(task_id)
         if task is not None:
             task.done = not task.done
+            task.completed_at = time.time() if task.done else None
             self.save()
 
     def remove(self, task_id: int) -> bool:
@@ -123,7 +147,12 @@ class TodoStore:
         task.reminder = reminder
         self.save()
 
-    # -- queries ---------------------------------------------------------------
+    def update_duration(self, task_id: int, duration_minutes: float | None) -> None:
+        task = self.get(task_id)
+        if task is None:
+            raise ValueError(f"No task with id {task_id}")
+        task.duration_minutes = duration_minutes
+        self.save()
 
     def filtered(self, mode: str = "all", label: str | None = None) -> list[Task]:
         tasks = self._tasks

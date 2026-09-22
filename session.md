@@ -1,55 +1,117 @@
-# To-Do List Application - Session Summary
+# To-Do List — Session Summary
 
-## Running the Application Locally
+## Running Locally
 
 ### Prerequisites
 - Python 3.12+
-- [Tesseract OCR](https://github.com/UB-Mannheim/tesseract) (system package)
-- pip packages: `flask`, `pytesseract`, ` Pillow`
+- [Tesseract OCR](https://github.com/UB-Mannheim/tesseract)
+- pip packages: `flask`, `pytesseract`, `Pillow`
 
-### Start the server
+### Start
 ```bash
 cd /home/gamp/Public/to-do-list
 python3 app.py
 ```
+Server: `http://localhost:5000`
 
-The server will be at `http://localhost:5000` (or PORT env var).
-
-### Environment variables
+### Environment Variables
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `TODO_FILE` | `$HOME/.todo_tasks.json` | Path to JSON data file |
+| `TODO_FILE` | `$HOME/.todo_tasks.json` | Data file path |
 | `PORT` | `5000` | Server port |
-| `FLASK_DEBUG` | `0` | Set to `1` for debug mode |
+| `FLASK_DEBUG` | `0` | Debug mode |
 
 ### API Endpoints
-- `GET /api/tasks?filter=all&label=Work` - List tasks
-- `POST /api/tasks` - Create task ({text, label, reminder})
-- `GET /api/tasks/<id>` - Get single task
-- `PUT /api/tasks/<id>` - Update task
-- `DELETE /api/tasks/<id>` - Delete task
-- `POST /api/tasks/clear-completed` - Clear completed
-- `GET /api/stats` - Statistics
-- `GET /api/reminders` - Due reminders
-- `POST /api/ocr` - Extract text from image
+- `GET /api/tasks?filter=all&label=Work` — List tasks
+- `POST /api/tasks` — Create task (text, label, duration_minutes, reminder)
+- `POST /api/tasks/batch` — Create multiple tasks (texts[], label)
+- `GET /api/tasks/<id>` — Get task
+- `PUT /api/tasks/<id>` — Update task (text, done, label, duration_minutes, reminder)
+- `DELETE /api/tasks/<id>` — Delete task
+- `POST /api/tasks/clear-completed` — Clear completed
+- `GET /api/stats` — Statistics with label_counts
+- `GET /api/reminders` — Due reminders
+- `POST /api/ocr` — OCR extract (returns text + lines[])
 
-## Deployment Options
+---
 
-### Vercel (Recommended for simplicity)
-1. Install the Vercel CLI: `npm i -g vercel`
-2. Run `vercel` in the project directory
-3. Set environment variables in the Vercel dashboard:
-   - `TODO_FILE` (path, will be in `/tmp` or writable dir)
-   - `PORT` (optional)
-   - `FLASK_DEBUG` (optional)
+## What Changed in This Session
 
-**Note:** Vercel's serverless environment has limited filesystem persistence. The JSON file (`TODO_FILE`) will not persist between requests in the free tier. For production use, consider a database backend.
+### Backend — `todo.py`
+- **`Task` dataclass**: Added `completed_at` (auto-set on toggle) and `duration_minutes` (expected completion time)
+- **`add_many()`**: New method for batch task creation (used by OCR)
+- **`update_duration()`**: New method to set duration on existing tasks
+- **`toggle()`**: Now auto-sets `completed_at` timestamp when task is marked done
+- **`load()`**: Robust error handling for corrupt JSON
 
-### Alternative: Railway/Render/DigitalOcean
-- Same Flask app, set env vars in dashboard
-- Persistent file storage available (set `TODO_FILE` to a mounted path)
+### Backend — `app.py`
+- **`/api/tasks/batch`** (POST): Batch create multiple tasks from OCR lines
+- **`duration_minutes`** support: Accepted on create and update endpoints
+- **OCR endpoint**: Returns both raw `text` and parsed `lines[]` array
+- **Label validation**: All endpoints validate against `VALID_LABELS`
+- **Stats**: Returns `label_counts` object with per-label task counts
 
-### Docker (for full control)
+### Frontend — `index.html`
+- **Landing page**: Beautiful splash screen with animated dots, "Get Started" button. Shown once, hidden after (stored in localStorage)
+- **Sidebar redesign**: Logo, "Lists" section with label nav, "Settings" section with theme palette selector and light/dark mode toggle
+- **Mobile hamburger**: Opens sidebar with overlay backdrop on mobile
+- **Input area**: Added label selector dropdown and duration button with presets (5m/15m/30m/1h/2h)
+- **Duration modal**: Quick-select presets or custom minutes input
+- **OCR modal**: Multi-task review — shows all extracted lines with checkboxes, select/deselect before batch-adding
+- **Edit modal**: Now includes duration field
+- **Task rows**: Show duration badge and relative timestamp ("2h ago")
+
+### Frontend — `style.css` (complete rewrite)
+- **6 theme palettes**: Blush (default), Ocean, Forest, Sunset, Lavender, Midnight
+- Each palette has full **light + dark** mode variants (12 total themes)
+- **Fluid edges**: All `border-radius` uses 16px (cards), 10px (buttons), 6px (inputs)
+- **Blended colors**: No gradients — soft backgrounds, subtle borders, translucent accent colors (`--accent-soft: rgba(...)`)
+- **Animations**: Landing page float-in, task slide-in, modal slide-up, toast slide-in, dot pulse, button scale
+- **CSS custom properties**: Every color is a variable — switching palettes is instant
+- **Mobile responsive**: Sidebar slides in/out with backdrop overlay, hamburger visible below 768px
+
+### Frontend — `app.js` (major rewrite)
+- **Landing page logic**: First-visit splash, skip if `landing_seen` in localStorage
+- **Theme palette picker**: 6 palettes stored in localStorage, applied via `data-palette` attribute
+- **Light/dark mode**: Toggle stored in localStorage, applied via `data-theme` attribute
+- **Duration picker**: Quick presets (5m, 15m, 30m, 1h, 2h) or custom minutes, sent with task creation
+- **OCR multi-task**: If OCR returns 1 line → fill input. If multiple → open review modal with checkboxes for selective batch-add
+- **Relative timestamps**: `formatTimeAgo()` shows "just now", "5m ago", "2h ago", "3d ago"
+- **PWA registration**: Registers service worker on page load
+
+### PWA
+- **manifest.json**: Updated with proper structure, SVG icons, orientation, categories
+- **sw.js**: Fixed caching to work locally (try/catch on install, proper GET-only filtering)
+- **SVG icons**: Created checkmark icons (192x192, 512x512) as inline SVG files
+
+---
+
+## How to Use
+
+1. Run `python3 app.py` → visit `http://localhost:5000`
+2. Click "Get Started" on the landing page (shown once)
+3. Use the sidebar hamburger to switch between label lists
+4. Change theme palette in sidebar Settings → Theme dropdown
+5. Toggle light/dark mode with the sun/moon button
+6. Add tasks with optional label and duration (click the clock icon)
+7. Upload an image for OCR — single line fills input, multiple lines open a review modal
+8. Edit tasks by double-clicking or clicking the edit icon — includes duration field
+9. Task timestamps show relative time ("2m ago", "1h ago")
+
+---
+
+## Deployment
+
+### Local (works as PWA)
+The app works as a PWA locally — install it from the browser's address bar ("Install app" prompt).
+
+### Vercel
+```bash
+npm i -g vercel && vercel
+```
+Set env vars in dashboard. Note: filesystem persistence limited on free tier.
+
+### Docker
 ```dockerfile
 FROM python:3.12-slim
 RUN apt-get update && apt-get install -y tesseract-ocr
@@ -59,37 +121,5 @@ RUN pip install flask pytesseract pillow
 CMD ["python3", "app.py"]
 ```
 
-## Remaining Improvements (from this session)
-
-### Backend (`todo.py`)
-1. **`filtered()` label logic** (line 131): Changed `label and label != "All"` to `label and label != "Default"` — filters now correctly exclude the "Default" label when `label != "Default"`, matching the UI behavior
-2. **`load()` error handling** (line 46): Added `try/except` for `JSONDecodeError` and `OSError` — prevents crashes on corrupt/malformed JSON file
-3. **`remove()` simplification** (line 93): Replaced `before/after` count check with `self.get()` guard — cleaner, always saves, returns bool
-4. **`search()` method** (new): Added query-by-text search returning tasks whose text contains the search term (case-insensitive)
-
-### API (`app.py`)
-1. **`create_task()` label validation** (line 58): Added `VALID_LABELS` check — invalid labels fall back to "Default" instead of being stored raw
-2. **`update_task()` label validation** (line 83-86): Same label validation on updates; invalid labels reset to "Default"
-3. **OCR size limit** (line 123): Added 2MB max image check before decoding — prevents abuse/timeout on large images
-4. **`stats()` label counts** (line 107): Now includes `label_counts` object showing task counts per label, derived from actual data
-
-### Frontend (`app.js`)
-1. **OCR loading indicator**: Already had CSS (`ocr-loading`, `ocr-spinner`) — functionality works
-2. **Reminder polling deduplication** (lines 297-312): Added `shownReminders` Set to prevent duplicate notifications for the same task within 60 seconds
-3. **Delete animation guard** (lines 198-209): Added `animating` flag to prevent rapid double-delete clicks from queuing multiple API calls
-4. **Stats label counts**: Frontend can now display per-label counts from the `/api/stats` response
-
-## File Changes Summary
-
-- `todo.py`: 4 improvements (filtered label, load error handling, remove simplification, new search method)
-- `app.py`: 5 improvements (label validation in create/update, OCR size limit, stats label counts)
-- `app.js`: 3 improvements (reminder dedup, delete animation guard, OCR loading already styled)
-- `session.md`: New file with running/deployment guides and remaining improvements list
-
-## Suggested Next Steps
-
-1. **Replace JSON file with a real database** (SQLite/PostgreSQL) for persistent, concurrent-safe storage
-2. **Add authentication** if the app is used by multiple users
-3. **Add task due dates + overdue filtering** — the reminder system is basic; could integrate with calendar
-4. **Dark mode UI polish** — already has theme toggle; could extend CSS variables
-5. **Unit tests** for `TodoStore` methods (filtered, search, counts, reminders)
+### Railway / Render / DigitalOcean
+Same Flask app, persistent file storage available.
